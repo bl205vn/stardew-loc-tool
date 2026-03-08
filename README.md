@@ -22,4 +22,4 @@ bộ JSON cùng cấu trúc thư mục.
 3. Lọc các dòng **CÒN THIẾU** để biết cần dịch thêm chỗ nào
 4. Bấm **Xuất CSV** để tải về
 
-> Không cần cài đặt gì. Mở bằng Chrome là chạy.
+> Không cần cài đặt gì. Mở bằng Cốc cốc là chạy.
