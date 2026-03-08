@@ -1,466 +1,1020 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>JSON → CSV Localization Tool</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet"/>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:#0d0f14;color:#e2e8f0;font-family:'Sora',sans-serif;min-height:100vh}
-:root{
-  --bg:#0d0f14;--surface:#151821;--surface2:#1c2030;--border:#252a3a;
-  --accent:#7c6af7;--accent2:#38bdf8;--accent-en:#34d399;--accent-vi:#f97316;
-  --text:#e2e8f0;--muted:#64748b;--success:#22c55e;
-}
-.app{max-width:1100px;margin:0 auto;padding:40px 24px 80px}
-.header{margin-bottom:40px}
-.header-tag{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.2em;color:var(--accent);text-transform:uppercase;margin-bottom:10px}
-.header h1{font-size:28px;font-weight:700;color:var(--text);line-height:1.2}
-.header p{margin-top:8px;color:var(--muted);font-size:14px;line-height:1.6}
-.drop-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
-.drop-zone{border:1.5px dashed var(--border);border-radius:12px;padding:24px 20px;text-align:center;transition:all .2s;background:var(--surface);position:relative;overflow:hidden}
-.drop-zone:hover,.drop-zone.dragover{border-color:var(--accent);background:#1a1d2e}
-.drop-zone.en{border-color:#2a3a2e}.drop-zone.en:hover,.drop-zone.en.dragover{border-color:var(--accent-en);background:#111a15}
-.drop-zone.vi{border-color:#3a2a1e}.drop-zone.vi:hover,.drop-zone.vi.dragover{border-color:var(--accent-vi);background:#1a1208}
-.drop-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;margin-bottom:8px;font-weight:600}
-.drop-zone.en .drop-label{color:var(--accent-en)}.drop-zone.vi .drop-label{color:var(--accent-vi)}
-.drop-icon{font-size:32px;margin-bottom:8px;display:block}
-.drop-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px}
-.drop-sub{font-size:12px;color:var(--muted);margin-bottom:12px}
-.btn-row{display:flex;gap:8px;justify-content:center;margin-top:4px}
-.btn-pick{padding:6px 14px;border-radius:6px;border:1px solid var(--border);font-size:12px;font-family:'Sora',sans-serif;font-weight:600;cursor:pointer;transition:all .15s;background:var(--surface2);color:var(--text)}
-.btn-pick:hover{border-color:var(--accent);color:var(--accent)}
-.file-list{margin-top:12px;display:flex;flex-direction:column;gap:5px;text-align:left;max-height:180px;overflow-y:auto}
-.file-chip{display:flex;align-items:center;gap:6px;background:var(--surface2);border-radius:6px;padding:5px 10px;font-size:11px;font-family:'JetBrains Mono',monospace}
-.file-chip .char-name{color:var(--text);font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.file-chip .key-count{color:var(--muted);white-space:nowrap;flex-shrink:0}
-.file-chip .remove{cursor:pointer;color:var(--muted);font-size:13px;line-height:1;flex-shrink:0;transition:color .15s}
-.file-chip .remove:hover{color:#ef4444}
-.loading-msg{margin-top:10px;font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace}
-.stats-bar{display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap}
-.stat{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 18px;font-family:'JetBrains Mono',monospace}
-.stat-value{font-size:22px;font-weight:700;color:var(--accent);line-height:1}
-.stat-label{font-size:11px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.1em}
-.stat.translated .stat-value{color:var(--accent-vi)}.stat.missing .stat-value{color:#f87171}
-.actions{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap}
-.btn{padding:10px 20px;border-radius:8px;border:none;font-family:'Sora',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:7px}
-.btn-primary{background:var(--accent);color:white}.btn-primary:hover{background:#6a58e0;transform:translateY(-1px)}
-.btn-primary:disabled{background:var(--border);color:var(--muted);cursor:not-allowed;transform:none}
-.btn-ghost{background:var(--surface);color:var(--text);border:1px solid var(--border)}.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
-.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
-.table-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:10px}
-.table-title{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
-.filter-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.filter-select{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 10px;font-size:12px;font-family:'Sora',sans-serif;cursor:pointer}
-.filter-input{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 10px;font-size:12px;font-family:'JetBrains Mono',monospace;width:160px;outline:none}
-.filter-input:focus{border-color:var(--accent)}
-.table-scroll{overflow-x:auto;max-height:480px;overflow-y:auto}
-table{width:100%;border-collapse:collapse;font-size:12.5px}
-thead th{background:var(--surface2);padding:10px 14px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);position:sticky;top:0;border-bottom:1px solid var(--border);white-space:nowrap}
-tbody tr{border-bottom:1px solid #1a1e2a;transition:background .1s}
-tbody tr:hover{background:var(--surface2)}
-tbody tr.missing-row td{background:rgba(239,68,68,.04)}
-td{padding:9px 14px;vertical-align:top;line-height:1.5}
-.td-char{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--accent2);white-space:nowrap;font-size:11px}
-.td-key{font-family:'JetBrains Mono',monospace;color:var(--muted);white-space:nowrap;font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis}
-.td-en{color:#a7f3d0;max-width:280px}.td-vi{color:#fed7aa;max-width:280px}
-.missing-badge{display:inline-block;background:rgba(239,68,68,.15);color:#f87171;font-size:10px;font-family:'JetBrains Mono',monospace;padding:2px 6px;border-radius:4px;border:1px solid rgba(239,68,68,.3)}
-.empty-state{text-align:center;padding:60px 20px;color:var(--muted)}
-.empty-state .empty-icon{font-size:40px;margin-bottom:12px}
-.empty-state p{font-size:14px}
-.progress-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:8px}
-.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent-vi),var(--accent));border-radius:2px;transition:width .4s ease}
-input[type=file]{display:none}
-.hint{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin-bottom:24px;font-size:13px;color:var(--muted);line-height:1.7}
-.hint strong{color:var(--text)}
-.hint code{font-family:'JetBrains Mono',monospace;background:var(--surface2);padding:1px 6px;border-radius:4px;font-size:12px;color:var(--accent2)}
-@media(max-width:600px){.drop-grid{grid-template-columns:1fr}.stats-bar{gap:8px}.table-header{flex-direction:column;align-items:flex-start}}
-</style>
-</head>
-<body>
-<div id="root"></div>
-<script type="text/babel">
-const { useState, useCallback, useRef } = React;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tool chuyển JSON → CSV hỗ trợ dịch thuật</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Sora:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: #0d0f14;
+        color: #e2e8f0;
+        font-family: "Sora", sans-serif;
+        min-height: 100vh;
+      }
+      :root {
+        --bg: #0d0f14;
+        --surface: #151821;
+        --surface2: #1c2030;
+        --border: #252a3a;
+        --accent: #7c6af7;
+        --accent2: #38bdf8;
+        --accent-en: #34d399;
+        --accent-vi: #f97316;
+        --text: #e2e8f0;
+        --muted: #64748b;
+        --success: #22c55e;
+      }
+      .app {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 40px 24px 80px;
+      }
+      .header {
+        margin-bottom: 40px;
+      }
+      .header-tag {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 0.2em;
+        color: var(--accent);
+        text-transform: uppercase;
+        margin-bottom: 10px;
+      }
+      .header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text);
+        line-height: 1.2;
+      }
+      .header p {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.6;
+      }
+      .drop-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+      .drop-zone {
+        border: 1.5px dashed var(--border);
+        border-radius: 12px;
+        padding: 24px 20px;
+        text-align: center;
+        transition: all 0.2s;
+        background: var(--surface);
+        position: relative;
+        overflow: hidden;
+      }
+      .drop-zone:hover,
+      .drop-zone.dragover {
+        border-color: var(--accent);
+        background: #1a1d2e;
+      }
+      .drop-zone.en {
+        border-color: #2a3a2e;
+      }
+      .drop-zone.en:hover,
+      .drop-zone.en.dragover {
+        border-color: var(--accent-en);
+        background: #111a15;
+      }
+      .drop-zone.vi {
+        border-color: #3a2a1e;
+      }
+      .drop-zone.vi:hover,
+      .drop-zone.vi.dragover {
+        border-color: var(--accent-vi);
+        background: #1a1208;
+      }
+      .drop-label {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10px;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      .drop-zone.en .drop-label {
+        color: var(--accent-en);
+      }
+      .drop-zone.vi .drop-label {
+        color: var(--accent-vi);
+      }
+      .drop-icon {
+        font-size: 32px;
+        margin-bottom: 8px;
+        display: block;
+      }
+      .drop-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 4px;
+      }
+      .drop-sub {
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 12px;
+      }
+      .btn-row {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        margin-top: 4px;
+      }
+      .btn-pick {
+        padding: 6px 14px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        font-size: 12px;
+        font-family: "Sora", sans-serif;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s;
+        background: var(--surface2);
+        color: var(--text);
+      }
+      .btn-pick:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .file-list {
+        margin-top: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        text-align: left;
+        max-height: 180px;
+        overflow-y: auto;
+      }
+      .file-chip {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--surface2);
+        border-radius: 6px;
+        padding: 5px 10px;
+        font-size: 11px;
+        font-family: "JetBrains Mono", monospace;
+      }
+      .file-chip .char-name {
+        color: var(--text);
+        font-weight: 600;
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .file-chip .key-count {
+        color: var(--muted);
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .file-chip .remove {
+        cursor: pointer;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1;
+        flex-shrink: 0;
+        transition: color 0.15s;
+      }
+      .file-chip .remove:hover {
+        color: #ef4444;
+      }
+      .loading-msg {
+        margin-top: 10px;
+        font-size: 12px;
+        color: var(--muted);
+        font-family: "JetBrains Mono", monospace;
+      }
+      .stats-bar {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+      }
+      .stat {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 12px 18px;
+        font-family: "JetBrains Mono", monospace;
+      }
+      .stat-value {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .stat-label {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+      }
+      .stat.translated .stat-value {
+        color: var(--accent-vi);
+      }
+      .stat.missing .stat-value {
+        color: #f87171;
+      }
+      .actions {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+      }
+      .btn {
+        padding: 10px 20px;
+        border-radius: 8px;
+        border: none;
+        font-family: "Sora", sans-serif;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .btn-primary {
+        background: var(--accent);
+        color: white;
+      }
+      .btn-primary:hover {
+        background: #6a58e0;
+        transform: translateY(-1px);
+      }
+      .btn-primary:disabled {
+        background: var(--border);
+        color: var(--muted);
+        cursor: not-allowed;
+        transform: none;
+      }
+      .btn-ghost {
+        background: var(--surface);
+        color: var(--text);
+        border: 1px solid var(--border);
+      }
+      .btn-ghost:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .table-wrap {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .table-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--border);
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .table-title {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+      }
+      .filter-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .filter-select {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        color: var(--text);
+        border-radius: 6px;
+        padding: 5px 10px;
+        font-size: 12px;
+        font-family: "Sora", sans-serif;
+        cursor: pointer;
+      }
+      .filter-input {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        color: var(--text);
+        border-radius: 6px;
+        padding: 5px 10px;
+        font-size: 12px;
+        font-family: "JetBrains Mono", monospace;
+        width: 160px;
+        outline: none;
+      }
+      .filter-input:focus {
+        border-color: var(--accent);
+      }
+      .table-scroll {
+        overflow-x: auto;
+        max-height: 480px;
+        overflow-y: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12.5px;
+      }
+      thead th {
+        background: var(--surface2);
+        padding: 10px 14px;
+        text-align: left;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--muted);
+        position: sticky;
+        top: 0;
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+      }
+      tbody tr {
+        border-bottom: 1px solid #1a1e2a;
+        transition: background 0.1s;
+      }
+      tbody tr:hover {
+        background: var(--surface2);
+      }
+      tbody tr.missing-row td {
+        background: rgba(239, 68, 68, 0.04);
+      }
+      td {
+        padding: 9px 14px;
+        vertical-align: top;
+        line-height: 1.5;
+      }
+      .td-char {
+        font-family: "JetBrains Mono", monospace;
+        font-weight: 600;
+        color: var(--accent2);
+        white-space: nowrap;
+        font-size: 11px;
+      }
+      .td-key {
+        font-family: "JetBrains Mono", monospace;
+        color: var(--muted);
+        white-space: nowrap;
+        font-size: 11px;
+        max-width: 160px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .td-en {
+        color: #a7f3d0;
+        max-width: 280px;
+      }
+      .td-vi {
+        color: #fed7aa;
+        max-width: 280px;
+      }
+      .missing-badge {
+        display: inline-block;
+        background: rgba(239, 68, 68, 0.15);
+        color: #f87171;
+        font-size: 10px;
+        font-family: "JetBrains Mono", monospace;
+        padding: 2px 6px;
+        border-radius: 4px;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+      }
+      .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--muted);
+      }
+      .empty-state .empty-icon {
+        font-size: 40px;
+        margin-bottom: 12px;
+      }
+      .empty-state p {
+        font-size: 14px;
+      }
+      .progress-bar {
+        height: 3px;
+        background: var(--border);
+        border-radius: 2px;
+        overflow: hidden;
+        margin-top: 8px;
+      }
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent-vi), var(--accent));
+        border-radius: 2px;
+        transition: width 0.4s ease;
+      }
+      input[type="file"] {
+        display: none;
+      }
+      .hint {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 16px 20px;
+        margin-bottom: 24px;
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+      .hint strong {
+        color: var(--text);
+      }
+      .hint code {
+        font-family: "JetBrains Mono", monospace;
+        background: var(--surface2);
+        padding: 1px 6px;
+        border-radius: 4px;
+        font-size: 12px;
+        color: var(--accent2);
+      }
+      @media (max-width: 600px) {
+        .drop-grid {
+          grid-template-columns: 1fr;
+        }
+        .stats-bar {
+          gap: 8px;
+        }
+        .table-header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="text/babel">
+      const { useState, useCallback, useRef } = React;
 
-// Strip extension only — common prefix stripped per-batch by stripCommonPrefix()
-function makeFileId(relPath) {
-  return relPath.replace(/\\/g, "/").replace(/\.[^/.]+$/, "");
-}
+      // Strip extension only — common prefix stripped per-batch by stripCommonPrefix()
+      function makeFileId(relPath) {
+        return relPath.replace(/\\/g, "/").replace(/\.[^/.]+$/, "");
+      }
 
-// Strip the shared leading path from all files in a batch.
-// e.g. all files share "Stardew.../assets/Content/" → strip that prefix
-// Result always starts from the first folder that differs across files.
-function stripCommonPrefix(files) {
-  if (!files.length) return files;
-  const split = files.map(f => f.fileId.split("/"));
-  const minDepth = Math.min(...split.map(p => p.length)) - 1; // keep at least filename
-  let common = 0;
-  for (let i = 0; i < minDepth; i++) {
-    if (split.every(p => p[i] === split[0][i])) common++;
-    else break;
-  }
-  if (common === 0) return files;
-  return files.map(f => ({ ...f, fileId: f.fileId.split("/").slice(common).join("/") }));
-}
+      // Strip the shared leading path from all files in a batch.
+      // e.g. all files share "Stardew.../assets/Content/" → strip that prefix
+      // Result always starts from the first folder that differs across files.
+      function stripCommonPrefix(files) {
+        if (!files.length) return files;
+        const split = files.map((f) => f.fileId.split("/"));
+        const minDepth = Math.min(...split.map((p) => p.length)) - 1; // keep at least filename
+        let common = 0;
+        for (let i = 0; i < minDepth; i++) {
+          if (split.every((p) => p[i] === split[0][i])) common++;
+          else break;
+        }
+        if (common === 0) return files;
+        return files.map((f) => ({
+          ...f,
+          fileId: f.fileId.split("/").slice(common).join("/"),
+        }));
+      }
 
-function flattenJson(obj, prefix = "") {
-  const result = {};
-  for (const [k, v] of Object.entries(obj)) {
-    const key = prefix ? `${prefix}.${k}` : k;
-    if (typeof v === "object" && v !== null && !Array.isArray(v)) {
-      Object.assign(result, flattenJson(v, key));
-    } else {
-      result[key] = String(v);
-    }
-  }
-  return result;
-}
+      function flattenJson(obj, prefix = "") {
+        const result = {};
+        for (const [k, v] of Object.entries(obj)) {
+          const key = prefix ? `${prefix}.${k}` : k;
+          if (typeof v === "object" && v !== null && !Array.isArray(v)) {
+            Object.assign(result, flattenJson(v, key));
+          } else {
+            result[key] = String(v);
+          }
+        }
+        return result;
+      }
 
-// Recursively read all .json files from a FileSystemDirectoryEntry
-function readDirEntry(entry, basePath = "") {
-  return new Promise(resolve => {
-    const results = [];
-    const path = basePath ? `${basePath}/${entry.name}` : entry.name;
-    const reader = entry.createReader();
-    const readBatch = () => {
-      reader.readEntries(entries => {
-        if (!entries.length) return resolve(results);
-        const promises = entries.map(e => {
-          if (e.isDirectory) return readDirEntry(e, path);
-          if (e.isFile && e.name.endsWith(".json")) {
-            return new Promise(res => {
-              e.file(file => {
-                const fr = new FileReader();
-                fr.onload = ev => {
-                  try {
-                    const data = JSON.parse(ev.target.result);
-                    const relPath = `${path}/${e.name}`;
-                    res([{ fileId: makeFileId(relPath), data, name: e.name }]);
-                  } catch { res([]); }
-                };
-                fr.readAsText(file);
+      // Recursively read all .json files from a FileSystemDirectoryEntry
+      function readDirEntry(entry, basePath = "") {
+        return new Promise((resolve) => {
+          const results = [];
+          const path = basePath ? `${basePath}/${entry.name}` : entry.name;
+          const reader = entry.createReader();
+          const readBatch = () => {
+            reader.readEntries((entries) => {
+              if (!entries.length) return resolve(results);
+              const promises = entries.map((e) => {
+                if (e.isDirectory) return readDirEntry(e, path);
+                if (e.isFile && e.name.endsWith(".json")) {
+                  return new Promise((res) => {
+                    e.file((file) => {
+                      const fr = new FileReader();
+                      fr.onload = (ev) => {
+                        try {
+                          const data = JSON.parse(ev.target.result);
+                          const relPath = `${path}/${e.name}`;
+                          res([
+                            { fileId: makeFileId(relPath), data, name: e.name },
+                          ]);
+                        } catch {
+                          res([]);
+                        }
+                      };
+                      fr.readAsText(file);
+                    });
+                  });
+                }
+                return Promise.resolve([]);
+              });
+              Promise.all(promises).then((batches) => {
+                batches.forEach((b) => results.push(...b));
+                readBatch();
               });
             });
-          }
-          return Promise.resolve([]);
-        });
-        Promise.all(promises).then(batches => {
-          batches.forEach(b => results.push(...b));
+          };
           readBatch();
         });
-      });
-    };
-    readBatch();
-  });
-}
-
-function buildRows(enFiles, viFiles) {
-  const viMap = {};
-  for (const { fileId, data } of viFiles) {
-    viMap[fileId.toLowerCase()] = flattenJson(data);
-  }
-  const sorted = [...enFiles].sort((a, b) => a.fileId.localeCompare(b.fileId));
-  const rows = [];
-  for (const { fileId, data } of sorted) {
-    const flat = flattenJson(data);
-    const viData = viMap[fileId.toLowerCase()] || {};
-    for (const [key, eng] of Object.entries(flat)) {
-      rows.push({ file: fileId, key, eng, translation: viData[key] || "" });
-    }
-  }
-  return rows;
-}
-
-function toCSV(rows) {
-  const escape = v => `"${String(v).replace(/"/g, '""')}"`;
-  const header = ["File","Key","English","Translation"].map(escape).join(",");
-  const lines = rows.map(r => [r.file, r.key, r.eng, r.translation].map(escape).join(","));
-  return [header, ...lines].join("\n");
-}
-
-function App() {
-  const [enFiles, setEnFiles] = useState([]);
-  const [viFiles, setViFiles] = useState([]);
-  const [dragOver, setDragOver] = useState(null);
-  const [loading, setLoading] = useState({ en: false, vi: false });
-  const [filterFile, setFilterFile] = useState("all");
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [search, setSearch] = useState("");
-  const enFileRef = useRef();
-  const enFolderRef = useRef();
-  const viFileRef = useRef();
-  const viFolderRef = useRef();
-
-  // Upsert: update existing files by fileId, append new ones
-  const mergeIn = (setter, incoming) => {
-    setter(prev => {
-      const map = new Map(prev.map(f => [f.fileId, f]));
-      incoming.forEach(f => map.set(f.fileId, f));
-      return [...map.values()];
-    });
-  };
-
-  // Handle flat file list (from <input> or file-only drop)
-  const processFiles = (files, type) => {
-    const jsonFiles = Array.from(files).filter(f => f.name.endsWith(".json"));
-    if (!jsonFiles.length) return;
-    setLoading(l => ({ ...l, [type]: true }));
-    const readers = jsonFiles.map(file =>
-      new Promise(res => {
-        const fr = new FileReader();
-        fr.onload = e => {
-          try {
-            const data = JSON.parse(e.target.result);
-            // Use webkitRelativePath if available (from webkitdirectory input), else filename
-            const relPath = file.webkitRelativePath || file.name;
-            res({ fileId: makeFileId(relPath), data, name: file.name });
-          } catch { res(null); }
-        };
-        fr.readAsText(file);
-      })
-    );
-    Promise.all(readers).then(results => {
-      const valid = stripCommonPrefix(results.filter(Boolean));
-      mergeIn(type === "en" ? setEnFiles : setViFiles, valid);
-      setLoading(l => ({ ...l, [type]: false }));
-    });
-  };
-
-  // Handle drag-drop — detect folders vs files
-  const onDrop = useCallback(async (e, type) => {
-    e.preventDefault();
-    setDragOver(null);
-    setLoading(l => ({ ...l, [type]: true }));
-    const items = [...e.dataTransfer.items];
-    const allFound = [];
-
-    await Promise.all(items.map(item => {
-      const entry = item.webkitGetAsEntry && item.webkitGetAsEntry();
-      if (!entry) return Promise.resolve();
-      if (entry.isDirectory) {
-        return readDirEntry(entry).then(found => allFound.push(...found));
-      } else if (entry.isFile && entry.name.endsWith(".json")) {
-        return new Promise(res => {
-          entry.file(file => {
-            const fr = new FileReader();
-            fr.onload = ev => {
-              try {
-                const data = JSON.parse(ev.target.result);
-                allFound.push({ fileId: makeFileId(entry.name), data, name: entry.name });
-              } catch {}
-              res();
-            };
-            fr.readAsText(file);
-          });
-        });
       }
-      return Promise.resolve();
-    }));
 
-    mergeIn(type === "en" ? setEnFiles : setViFiles, stripCommonPrefix(allFound));
-    setLoading(l => ({ ...l, [type]: false }));
-  }, []);
+      function buildRows(enFiles, viFiles) {
+        const viMap = {};
+        for (const { fileId, data } of viFiles) {
+          viMap[fileId.toLowerCase()] = flattenJson(data);
+        }
+        const sorted = [...enFiles].sort((a, b) =>
+          a.fileId.localeCompare(b.fileId),
+        );
+        const rows = [];
+        for (const { fileId, data } of sorted) {
+          const flat = flattenJson(data);
+          const viData = viMap[fileId.toLowerCase()] || {};
+          for (const [key, eng] of Object.entries(flat)) {
+            rows.push({
+              file: fileId,
+              key,
+              eng,
+              translation: viData[key] || "",
+            });
+          }
+        }
+        return rows;
+      }
 
-  const onDragOver = (e, type) => { e.preventDefault(); setDragOver(type); };
-  const onDragLeave = () => setDragOver(null);
-  const removeFile = (type, fileId) => {
-    if (type === "en") setEnFiles(p => p.filter(f => f.fileId !== fileId));
-    else setViFiles(p => p.filter(f => f.fileId !== fileId));
-  };
+      function toCSV(rows) {
+        const escape = (v) => `"${String(v).replace(/"/g, '""')}"`;
+        const header = ["File", "Key", "English", "Translation"]
+          .map(escape)
+          .join(",");
+        const lines = rows.map((r) =>
+          [r.file, r.key, r.eng, r.translation].map(escape).join(","),
+        );
+        return [header, ...lines].join("\n");
+      }
 
-  const allRows = buildRows(enFiles, viFiles);
-  const fileIds = [...new Set(allRows.map(r => r.file))].sort((a,b) => a.localeCompare(b));
-  const translated = allRows.filter(r => r.translation).length;
-  const missing = allRows.length - translated;
-  const pct = allRows.length ? Math.round((translated / allRows.length) * 100) : 0;
+      function App() {
+        const [enFiles, setEnFiles] = useState([]);
+        const [viFiles, setViFiles] = useState([]);
+        const [dragOver, setDragOver] = useState(null);
+        const [loading, setLoading] = useState({ en: false, vi: false });
+        const [filterFile, setFilterFile] = useState("all");
+        const [filterStatus, setFilterStatus] = useState("all");
+        const [search, setSearch] = useState("");
+        const enFileRef = useRef();
+        const enFolderRef = useRef();
+        const viFileRef = useRef();
+        const viFolderRef = useRef();
 
-  const filtered = allRows.filter(r => {
-    if (filterFile !== "all" && r.file !== filterFile) return false;
-    if (filterStatus === "missing" && r.translation) return false;
-    if (filterStatus === "done" && !r.translation) return false;
-    if (search) {
-      const q = search.toLowerCase();
-      return r.file.toLowerCase().includes(q) || r.key.toLowerCase().includes(q)
-          || r.eng.toLowerCase().includes(q) || r.translation.toLowerCase().includes(q);
-    }
-    return true;
-  });
+        // Upsert: update existing files by fileId, append new ones
+        const mergeIn = (setter, incoming) => {
+          setter((prev) => {
+            const map = new Map(prev.map((f) => [f.fileId, f]));
+            incoming.forEach((f) => map.set(f.fileId, f));
+            return [...map.values()];
+          });
+        };
 
-  const downloadCSV = () => {
-    const exportRows = (filterFile !== "all" || filterStatus !== "all" || search) ? filtered : allRows;
-    const csv = toCSV(exportRows);
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = "localization.csv"; a.click();
-    URL.revokeObjectURL(url);
-  };
+        // Handle flat file list (from <input> or file-only drop)
+        const processFiles = (files, type) => {
+          const jsonFiles = Array.from(files).filter((f) =>
+            f.name.endsWith(".json"),
+          );
+          if (!jsonFiles.length) return;
+          setLoading((l) => ({ ...l, [type]: true }));
+          const readers = jsonFiles.map(
+            (file) =>
+              new Promise((res) => {
+                const fr = new FileReader();
+                fr.onload = (e) => {
+                  try {
+                    const data = JSON.parse(e.target.result);
+                    // Use webkitRelativePath if available (from webkitdirectory input), else filename
+                    const relPath = file.webkitRelativePath || file.name;
+                    res({ fileId: makeFileId(relPath), data, name: file.name });
+                  } catch {
+                    res(null);
+                  }
+                };
+                fr.readAsText(file);
+              }),
+          );
+          Promise.all(readers).then((results) => {
+            const valid = stripCommonPrefix(results.filter(Boolean));
+            mergeIn(type === "en" ? setEnFiles : setViFiles, valid);
+            setLoading((l) => ({ ...l, [type]: false }));
+          });
+        };
 
-  const DropZone = ({ type, label, flag }) => {
-    const files = type === "en" ? enFiles : viFiles;
-    const isLoading = loading[type];
-    const fileRef = type === "en" ? enFileRef : viFileRef;
-    const folderRef = type === "en" ? enFolderRef : viFolderRef;
-    return (
-      <div
-        className={`drop-zone ${type} ${dragOver === type ? "dragover" : ""}`}
-        onDrop={e => onDrop(e, type)}
-        onDragOver={e => onDragOver(e, type)}
-        onDragLeave={onDragLeave}
-      >
-        <input ref={fileRef} type="file" multiple accept=".json"
-          onChange={e => { processFiles(e.target.files, type); e.target.value = ""; }} />
-        <input ref={folderRef} type="file" webkitdirectory="" multiple
-          onChange={e => { processFiles(e.target.files, type); e.target.value = ""; }} />
-        <div className="drop-label">{flag} {label}</div>
-        <span className="drop-icon">📂</span>
-        <div className="drop-title">Kéo file hoặc thư mục vào đây</div>
-        <div className="drop-sub">Hỗ trợ cả thư mục con đệ quy</div>
-        <div className="btn-row">
-          <button className="btn-pick" onClick={e => { e.stopPropagation(); fileRef.current.click(); }}>
-            📄 Chọn file
-          </button>
-          <button className="btn-pick" onClick={e => { e.stopPropagation(); folderRef.current.click(); }}>
-            📁 Chọn folder
-          </button>
-        </div>
-        {isLoading && <div className="loading-msg">⏳ Đang đọc file...</div>}
-        {files.length > 0 && (
-          <div className="file-list" onClick={e => e.stopPropagation()}>
-            {files.sort((a,b) => a.fileId.localeCompare(b.fileId)).map(f => (
-              <div key={f.fileId} className="file-chip">
-                <span className="char-name" title={f.fileId}>{f.fileId}</span>
-                <span className="key-count">{Object.keys(flattenJson(f.data)).length}k</span>
-                <span className="remove" onClick={() => removeFile(type, f.fileId)}>✕</span>
+        // Handle drag-drop — detect folders vs files
+        const onDrop = useCallback(async (e, type) => {
+          e.preventDefault();
+          setDragOver(null);
+          setLoading((l) => ({ ...l, [type]: true }));
+          const items = [...e.dataTransfer.items];
+          const allFound = [];
+
+          await Promise.all(
+            items.map((item) => {
+              const entry = item.webkitGetAsEntry && item.webkitGetAsEntry();
+              if (!entry) return Promise.resolve();
+              if (entry.isDirectory) {
+                return readDirEntry(entry).then((found) =>
+                  allFound.push(...found),
+                );
+              } else if (entry.isFile && entry.name.endsWith(".json")) {
+                return new Promise((res) => {
+                  entry.file((file) => {
+                    const fr = new FileReader();
+                    fr.onload = (ev) => {
+                      try {
+                        const data = JSON.parse(ev.target.result);
+                        allFound.push({
+                          fileId: makeFileId(entry.name),
+                          data,
+                          name: entry.name,
+                        });
+                      } catch {}
+                      res();
+                    };
+                    fr.readAsText(file);
+                  });
+                });
+              }
+              return Promise.resolve();
+            }),
+          );
+
+          mergeIn(
+            type === "en" ? setEnFiles : setViFiles,
+            stripCommonPrefix(allFound),
+          );
+          setLoading((l) => ({ ...l, [type]: false }));
+        }, []);
+
+        const onDragOver = (e, type) => {
+          e.preventDefault();
+          setDragOver(type);
+        };
+        const onDragLeave = () => setDragOver(null);
+        const removeFile = (type, fileId) => {
+          if (type === "en")
+            setEnFiles((p) => p.filter((f) => f.fileId !== fileId));
+          else setViFiles((p) => p.filter((f) => f.fileId !== fileId));
+        };
+
+        const allRows = buildRows(enFiles, viFiles);
+        const fileIds = [...new Set(allRows.map((r) => r.file))].sort((a, b) =>
+          a.localeCompare(b),
+        );
+        const translated = allRows.filter((r) => r.translation).length;
+        const missing = allRows.length - translated;
+        const pct = allRows.length
+          ? Math.round((translated / allRows.length) * 100)
+          : 0;
+
+        const filtered = allRows.filter((r) => {
+          if (filterFile !== "all" && r.file !== filterFile) return false;
+          if (filterStatus === "missing" && r.translation) return false;
+          if (filterStatus === "done" && !r.translation) return false;
+          if (search) {
+            const q = search.toLowerCase();
+            return (
+              r.file.toLowerCase().includes(q) ||
+              r.key.toLowerCase().includes(q) ||
+              r.eng.toLowerCase().includes(q) ||
+              r.translation.toLowerCase().includes(q)
+            );
+          }
+          return true;
+        });
+
+        const downloadCSV = () => {
+          const exportRows =
+            filterFile !== "all" || filterStatus !== "all" || search
+              ? filtered
+              : allRows;
+          const csv = toCSV(exportRows);
+          const blob = new Blob(["\uFEFF" + csv], {
+            type: "text/csv;charset=utf-8;",
+          });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "localization.csv";
+          a.click();
+          URL.revokeObjectURL(url);
+        };
+
+        const DropZone = ({ type, label, flag }) => {
+          const files = type === "en" ? enFiles : viFiles;
+          const isLoading = loading[type];
+          const fileRef = type === "en" ? enFileRef : viFileRef;
+          const folderRef = type === "en" ? enFolderRef : viFolderRef;
+          return (
+            <div
+              className={`drop-zone ${type} ${dragOver === type ? "dragover" : ""}`}
+              onDrop={(e) => onDrop(e, type)}
+              onDragOver={(e) => onDragOver(e, type)}
+              onDragLeave={onDragLeave}
+            >
+              <input
+                ref={fileRef}
+                type="file"
+                multiple
+                accept=".json"
+                onChange={(e) => {
+                  processFiles(e.target.files, type);
+                  e.target.value = "";
+                }}
+              />
+              <input
+                ref={folderRef}
+                type="file"
+                webkitdirectory=""
+                multiple
+                onChange={(e) => {
+                  processFiles(e.target.files, type);
+                  e.target.value = "";
+                }}
+              />
+              <div className="drop-label">
+                {flag} {label}
               </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  return (
-    <div className="app">
-      <div className="header">
-        <div className="header-tag">// Localization Tool</div>
-        <h1>JSON → CSV Localization Tool</h1>
-        <p>Kéo thả file, nhiều file, hoặc cả thư mục (đệ quy). Ghép EN + VI theo đường dẫn tương đối tự động.</p>
-      </div>
-
-      <div className="hint">
-        <strong>Cách dùng:</strong> Kéo thư mục <code>Content</code> EN vào trái, <code>Content</code> VI vào phải — tool tự ghép theo đường dẫn tương đối.
-        File <code>Content/Characters/Dialogue/Abigail.json</code> → cột File sẽ là <code>Characters/Dialogue/Abigail</code>.
-        Hoạt động với <strong>mọi bộ JSON</strong> cùng cấu trúc thư mục.
-      </div>
-
-      <div className="drop-grid">
-        <DropZone type="en" label="Source (English)" flag="🇬🇧" />
-        <DropZone type="vi" label="Translation (VI)" flag="🇻🇳" />
-      </div>
-
-      {allRows.length > 0 && (
-        <>
-          <div className="stats-bar">
-            <div className="stat">
-              <div className="stat-value">{allRows.length}</div>
-              <div className="stat-label">Total keys</div>
-            </div>
-            <div className="stat">
-              <div className="stat-value">{(enFiles.length + viFiles.length)}</div>
-              <div className="stat-label">Files loaded</div>
-            </div>
-            <div className="stat translated">
-              <div className="stat-value">{translated} <span style={{fontSize:13,color:'var(--muted)'}}>({pct}%)</span></div>
-              <div className="stat-label">Translated</div>
-              <div className="progress-bar"><div className="progress-fill" style={{width:`${pct}%`}} /></div>
-            </div>
-            {missing > 0 && (
-              <div className="stat missing">
-                <div className="stat-value">{missing}</div>
-                <div className="stat-label">Missing</div>
+              <span className="drop-icon">📂</span>
+              <div className="drop-title">Kéo file hoặc thư mục vào đây</div>
+              <div className="drop-sub">Hỗ trợ cả thư mục con đệ quy</div>
+              <div className="btn-row">
+                <button
+                  className="btn-pick"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    fileRef.current.click();
+                  }}
+                >
+                  📄 Chọn file
+                </button>
+                <button
+                  className="btn-pick"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    folderRef.current.click();
+                  }}
+                >
+                  📁 Chọn folder
+                </button>
               </div>
-            )}
-          </div>
-
-          <div className="actions">
-            <button className="btn btn-primary" onClick={downloadCSV}>
-              ⬇ Export CSV {(filterFile !== "all" || filterStatus !== "all" || search) ? "(filtered)" : `(${allRows.length} rows)`}
-            </button>
-            <button className="btn btn-ghost" onClick={() => { setEnFiles([]); setViFiles([]); }}>
-              🗑 Clear all
-            </button>
-          </div>
-
-          <div className="table-wrap">
-            <div className="table-header">
-              <span className="table-title">Preview · {filtered.length} rows</span>
-              <div className="filter-row">
-                <input className="filter-input" placeholder="🔍 search..."
-                  value={search} onChange={e => setSearch(e.target.value)} />
-                <select className="filter-select" value={filterFile}
-                  onChange={e => setFilterFile(e.target.value)}>
-                  <option value="all">All files</option>
-                  {fileIds.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-                <select className="filter-select" value={filterStatus}
-                  onChange={e => setFilterStatus(e.target.value)}>
-                  <option value="all">All</option>
-                  <option value="missing">Missing only</option>
-                  <option value="done">Translated</option>
-                </select>
-              </div>
-            </div>
-            <div className="table-scroll">
-              {filtered.length === 0 ? (
-                <div className="empty-state"><div className="empty-icon">🔍</div><p>Không có kết quả</p></div>
-              ) : (
-                <table>
-                  <thead><tr><th>File</th><th>Key</th><th>English</th><th>Translation</th></tr></thead>
-                  <tbody>
-                    {filtered.slice(0, 500).map((r, i) => (
-                      <tr key={i} className={!r.translation ? "missing-row" : ""}>
-                        <td className="td-char" title={r.file}>{r.file}</td>
-                        <td className="td-key" title={r.key}>{r.key}</td>
-                        <td className="td-en">{r.eng}</td>
-                        <td className="td-vi">{r.translation || <span className="missing-badge">MISSING</span>}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              {isLoading && (
+                <div className="loading-msg">⏳ Đang đọc file...</div>
               )}
-              {filtered.length > 500 && (
-                <div style={{padding:"12px 18px",color:"var(--muted)",fontSize:12,fontFamily:"JetBrains Mono,monospace"}}>
-                  Showing 500/{filtered.length} rows — export CSV để xem tất cả
+              {files.length > 0 && (
+                <div className="file-list" onClick={(e) => e.stopPropagation()}>
+                  {files
+                    .sort((a, b) => a.fileId.localeCompare(b.fileId))
+                    .map((f) => (
+                      <div key={f.fileId} className="file-chip">
+                        <span className="char-name" title={f.fileId}>
+                          {f.fileId}
+                        </span>
+                        <span className="key-count">
+                          {Object.keys(flattenJson(f.data)).length}k
+                        </span>
+                        <span
+                          className="remove"
+                          onClick={() => removeFile(type, f.fileId)}
+                        >
+                          ✕
+                        </span>
+                      </div>
+                    ))}
                 </div>
               )}
             </div>
+          );
+        };
+
+        return (
+          <div className="app">
+            <div className="header">
+              <div className="header-tag">
+                // Tool hỗ trợ tạo file dịch csv stardew valley là chính
+              </div>
+              <h1>Tool chuyển JSON → CSV hỗ trợ dịch thuật</h1>
+              <p>
+                Kéo thả file, nhiều file, hoặc cả thư mục. Ghép EN + VI theo
+                đường dẫn tương đối tự động thành csv cũng như kiểm tra bản
+                dịch.
+              </p>
+            </div>
+
+            <div className="hint">
+              <strong>Cách dùng:</strong> Kéo thư mục có chứa{" "}
+              <code>Content</code> EN vào trái, <code>Content</code> VI vào phải
+              — tool tự ghép theo đường dẫn tương đối. File{" "}
+              <code>Content/Characters/Dialogue/Abigail.json</code> → cột File
+              sẽ là <code>Characters/Dialogue/Abigail</code>. Hoạt động với{" "}
+              <strong>mọi bộ JSON</strong> cùng cấu trúc thư mục.
+            </div>
+
+            <div className="drop-grid">
+              <DropZone type="en" label="Bản gốc (English)" flag="🇬🇧" />
+              <DropZone type="vi" label="Bản dịch (Tiếng Việt)" flag="🇻🇳" />
+            </div>
+
+            {allRows.length > 0 && (
+              <>
+                <div className="stats-bar">
+                  <div className="stat">
+                    <div className="stat-value">{allRows.length}</div>
+                    <div className="stat-label">Total keys</div>
+                  </div>
+                  <div className="stat">
+                    <div className="stat-value">
+                      {enFiles.length + viFiles.length}
+                    </div>
+                    <div className="stat-label">Files loaded</div>
+                  </div>
+                  <div className="stat translated">
+                    <div className="stat-value">
+                      {translated}{" "}
+                      <span style={{ fontSize: 13, color: "var(--muted)" }}>
+                        ({pct}%)
+                      </span>
+                    </div>
+                    <div className="stat-label">Translated</div>
+                    <div className="progress-bar">
+                      <div
+                        className="progress-fill"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                  {missing > 0 && (
+                    <div className="stat missing">
+                      <div className="stat-value">{missing}</div>
+                      <div className="stat-label">Missing</div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="actions">
+                  <button className="btn btn-primary" onClick={downloadCSV}>
+                    ⬇ Export CSV{" "}
+                    {filterFile !== "all" || filterStatus !== "all" || search
+                      ? "(filtered)"
+                      : `(${allRows.length} rows)`}
+                  </button>
+                  <button
+                    className="btn btn-ghost"
+                    onClick={() => {
+                      setEnFiles([]);
+                      setViFiles([]);
+                    }}
+                  >
+                    🗑 Clear all
+                  </button>
+                </div>
+
+                <div className="table-wrap">
+                  <div className="table-header">
+                    <span className="table-title">
+                      Preview · {filtered.length} rows
+                    </span>
+                    <div className="filter-row">
+                      <input
+                        className="filter-input"
+                        placeholder="🔍 search..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                      />
+                      <select
+                        className="filter-select"
+                        value={filterFile}
+                        onChange={(e) => setFilterFile(e.target.value)}
+                      >
+                        <option value="all">All files</option>
+                        {fileIds.map((c) => (
+                          <option key={c} value={c}>
+                            {c}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        className="filter-select"
+                        value={filterStatus}
+                        onChange={(e) => setFilterStatus(e.target.value)}
+                      >
+                        <option value="all">All</option>
+                        <option value="missing">Missing only</option>
+                        <option value="done">Translated</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="table-scroll">
+                    {filtered.length === 0 ? (
+                      <div className="empty-state">
+                        <div className="empty-icon">🔍</div>
+                        <p>Không có kết quả</p>
+                      </div>
+                    ) : (
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>File</th>
+                            <th>Key</th>
+                            <th>English</th>
+                            <th>Translation</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filtered.slice(0, 500).map((r, i) => (
+                            <tr
+                              key={i}
+                              className={!r.translation ? "missing-row" : ""}
+                            >
+                              <td className="td-char" title={r.file}>
+                                {r.file}
+                              </td>
+                              <td className="td-key" title={r.key}>
+                                {r.key}
+                              </td>
+                              <td className="td-en">{r.eng}</td>
+                              <td className="td-vi">
+                                {r.translation || (
+                                  <span className="missing-badge">MISSING</span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                    {filtered.length > 500 && (
+                      <div
+                        style={{
+                          padding: "12px 18px",
+                          color: "var(--muted)",
+                          fontSize: 12,
+                          fontFamily: "JetBrains Mono,monospace",
+                        }}
+                      >
+                        Showing 500/{filtered.length} rows — export CSV để xem
+                        tất cả
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {allRows.length === 0 && !loading.en && !loading.vi && (
+              <div className="empty-state" style={{ marginTop: 40 }}>
+                <div className="empty-icon">🌾</div>
+                <p>Kéo file hoặc thư mục vào để bắt đầu</p>
+              </div>
+            )}
+            {(loading.en || loading.vi) && (
+              <div className="empty-state" style={{ marginTop: 40 }}>
+                <div className="empty-icon">⏳</div>
+                <p>Đang đọc file...</p>
+              </div>
+            )}
           </div>
-        </>
-      )}
+        );
+      }
 
-      {allRows.length === 0 && !loading.en && !loading.vi && (
-        <div className="empty-state" style={{marginTop:40}}>
-          <div className="empty-icon">🌾</div>
-          <p>Kéo file hoặc thư mục vào để bắt đầu</p>
-        </div>
-      )}
-      {(loading.en || loading.vi) && (
-        <div className="empty-state" style={{marginTop:40}}>
-          <div className="empty-icon">⏳</div>
-          <p>Đang đọc file...</p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
-</script>
-</body>
+      ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+    </script>
+  </body>
 </html>
