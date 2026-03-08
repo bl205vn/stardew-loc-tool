@@ -2,7 +2,10 @@
 
 🔗 **[Dùng online tại đây](https://bl205vn.github.io/stardew-loc-tool/)**
 
-Tool hỗ trợ so sánh và kiểm tra bản dịch game bằng cách chuyển file JSON sang CSV. Được tạo ra chủ yếu để phục vụ việc Việt hóa Stardew Valley, nhưng hoạt động với mọi bộ JSON cùng cấu trúc thư mục.
+Tool hỗ trợ so sánh và kiểm tra bản dịch game bằng cách chuyển file JSON sang CSV. 
+Được tạo ra chủ yếu để phục vụ việc Việt hóa Stardew Valley — đặc biệt để 
+tạo file CSV cho AI (LLM) đọc và hỗ trợ dịch thuật, nhưng hoạt động với mọi 
+bộ JSON cùng cấu trúc thư mục.
 
 ## Tính năng
 
