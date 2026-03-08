@@ -562,11 +562,12 @@
           const flat = flattenJson(data);
           const viData = viMap[fileId.toLowerCase()] || {};
           for (const [key, eng] of Object.entries(flat)) {
+            if (eng === "") continue;
             rows.push({
               file: fileId,
               key,
               eng,
-              translation: viData[key] || "",
+              translation: key in viData ? viData[key] : null,
             });
           }
         }
@@ -579,7 +580,7 @@
           .map(escape)
           .join(",");
         const lines = rows.map((r) =>
-          [r.file, r.key, r.eng, r.translation].map(escape).join(","),
+          [r.file, r.key, r.eng, r.translation ?? ""].map(escape).join(","),
         );
         return [header, ...lines].join("\n");
       }
@@ -698,7 +699,7 @@
         const fileIds = [...new Set(allRows.map((r) => r.file))].sort((a, b) =>
           a.localeCompare(b),
         );
-        const translated = allRows.filter((r) => r.translation).length;
+        const translated = allRows.filter((r) => r.translation !== null).length;
         const missing = allRows.length - translated;
         const pct = allRows.length
           ? Math.round((translated / allRows.length) * 100)
@@ -706,15 +707,16 @@
 
         const filtered = allRows.filter((r) => {
           if (filterFile !== "all" && r.file !== filterFile) return false;
-          if (filterStatus === "missing" && r.translation) return false;
-          if (filterStatus === "done" && !r.translation) return false;
+          if (filterStatus === "missing" && r.translation !== null)
+            return false;
+          if (filterStatus === "done" && r.translation === null) return false;
           if (search) {
             const q = search.toLowerCase();
             return (
               r.file.toLowerCase().includes(q) ||
               r.key.toLowerCase().includes(q) ||
               r.eng.toLowerCase().includes(q) ||
-              r.translation.toLowerCase().includes(q)
+              (r.translation ?? "").toLowerCase().includes(q)
             );
           }
           return true;
@@ -960,7 +962,9 @@
                           {filtered.slice(0, 500).map((r, i) => (
                             <tr
                               key={i}
-                              className={!r.translation ? "missing-row" : ""}
+                              className={
+                                r.translation === null ? "missing-row" : ""
+                              }
                             >
                               <td className="td-char" title={r.file}>
                                 {r.file}
@@ -970,10 +974,12 @@
                               </td>
                               <td className="td-en">{r.eng}</td>
                               <td className="td-vi">
-                                {r.translation || (
+                                {r.translation === null ? (
                                   <span className="missing-badge">
                                     CÒN THIẾU
                                   </span>
+                                ) : (
+                                  r.translation
                                 )}
                               </td>
                             </tr>
