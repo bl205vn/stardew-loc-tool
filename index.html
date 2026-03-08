@@ -774,7 +774,6 @@
               </div>
               <span className="drop-icon">📂</span>
               <div className="drop-title">Kéo file hoặc thư mục vào đây</div>
-              <div className="drop-sub">Hỗ trợ cả thư mục con đệ quy</div>
               <div className="btn-row">
                 <button
                   className="btn-pick"
@@ -792,7 +791,7 @@
                     folderRef.current.click();
                   }}
                 >
-                  📁 Chọn folder
+                  📁 Chọn thư mục
                 </button>
               </div>
               {isLoading && (
@@ -890,10 +889,10 @@
 
                 <div className="actions">
                   <button className="btn btn-primary" onClick={downloadCSV}>
-                    ⬇ Export CSV{" "}
+                    ⬇ Xuất CSV{" "}
                     {filterFile !== "all" || filterStatus !== "all" || search
-                      ? "(filtered)"
-                      : `(${allRows.length} rows)`}
+                      ? "(đã lọc)"
+                      : `(${allRows.length} dòng)`}
                   </button>
                   <button
                     className="btn btn-ghost"
