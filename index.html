@@ -702,7 +702,7 @@
         const translated = allRows.filter((r) => r.translation !== null).length;
         const missing = allRows.length - translated;
         const pct = allRows.length
-          ? Math.round((translated / allRows.length) * 100)
+          ? Math.floor((translated / allRows.length) * 100)
           : 0;
 
         const filtered = allRows.filter((r) => {
