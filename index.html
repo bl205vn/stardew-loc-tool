@@ -857,13 +857,13 @@
                 <div className="stats-bar">
                   <div className="stat">
                     <div className="stat-value">{allRows.length}</div>
-                    <div className="stat-label">Total keys</div>
+                    <div className="stat-label">Tổng key</div>
                   </div>
                   <div className="stat">
                     <div className="stat-value">
                       {enFiles.length + viFiles.length}
                     </div>
-                    <div className="stat-label">Files loaded</div>
+                    <div className="stat-label">File đã đọc</div>
                   </div>
                   <div className="stat translated">
                     <div className="stat-value">
@@ -872,7 +872,7 @@
                         ({pct}%)
                       </span>
                     </div>
-                    <div className="stat-label">Translated</div>
+                    <div className="stat-label">Đã dịch</div>
                     <div className="progress-bar">
                       <div
                         className="progress-fill"
@@ -883,7 +883,7 @@
                   {missing > 0 && (
                     <div className="stat missing">
                       <div className="stat-value">{missing}</div>
-                      <div className="stat-label">Missing</div>
+                      <div className="stat-label">Còn thiếu</div>
                     </div>
                   )}
                 </div>
@@ -902,19 +902,19 @@
                       setViFiles([]);
                     }}
                   >
-                    🗑 Clear all
+                    🗑 Xóa tất cả
                   </button>
                 </div>
 
                 <div className="table-wrap">
                   <div className="table-header">
                     <span className="table-title">
-                      Preview · {filtered.length} rows
+                      Xem trước · {filtered.length} dòng
                     </span>
                     <div className="filter-row">
                       <input
                         className="filter-input"
-                        placeholder="🔍 search..."
+                        placeholder="🔍 tìm kiếm..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                       />
@@ -923,7 +923,7 @@
                         value={filterFile}
                         onChange={(e) => setFilterFile(e.target.value)}
                       >
-                        <option value="all">All files</option>
+                        <option value="all">Tất cả file</option>
                         {fileIds.map((c) => (
                           <option key={c} value={c}>
                             {c}
@@ -935,9 +935,9 @@
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}
                       >
-                        <option value="all">All</option>
-                        <option value="missing">Missing only</option>
-                        <option value="done">Translated</option>
+                        <option value="all">Tất cả</option>
+                        <option value="missing">Còn thiếu</option>
+                        <option value="done">Đã dịch</option>
                       </select>
                     </div>
                   </div>
@@ -953,8 +953,8 @@
                           <tr>
                             <th>File</th>
                             <th>Key</th>
-                            <th>English</th>
-                            <th>Translation</th>
+                            <th>Bản gốc</th>
+                            <th>Bản dịch</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -972,7 +972,9 @@
                               <td className="td-en">{r.eng}</td>
                               <td className="td-vi">
                                 {r.translation || (
-                                  <span className="missing-badge">MISSING</span>
+                                  <span className="missing-badge">
+                                    CÒN THIẾU
+                                  </span>
                                 )}
                               </td>
                             </tr>
@@ -989,7 +991,7 @@
                           fontFamily: "JetBrains Mono,monospace",
                         }}
                       >
-                        Showing 500/{filtered.length} rows — export CSV để xem
+                        Hiển thị 500/{filtered.length} dòng — xuất CSV để xem
                         tất cả
                       </div>
                     )}
