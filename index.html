@@ -470,6 +470,42 @@
     <script type="text/babel">
       const { useState, useCallback, useRef } = React;
 
+      function parseJsonC(text) {
+        let result = "";
+        let i = 0;
+        while (i < text.length) {
+          if (text[i] === '"') {
+            // Đang trong string → copy nguyên, không strip gì cả
+            let j = i + 1;
+            while (j < text.length) {
+              if (text[j] === "\\") {
+                j += 2;
+                continue;
+              } // skip escaped char
+              if (text[j] === '"') {
+                j++;
+                break;
+              }
+              j++;
+            }
+            result += text.slice(i, j);
+            i = j;
+          } else if (text[i] === "/" && text[i + 1] === "/") {
+            // Line comment → bỏ đến hết dòng
+            while (i < text.length && text[i] !== "\n") i++;
+          } else if (text[i] === "/" && text[i + 1] === "*") {
+            // Block comment → bỏ đến */
+            i += 2;
+            while (i < text.length && !(text[i] === "*" && text[i + 1] === "/"))
+              i++;
+            i += 2;
+          } else {
+            result += text[i++];
+          }
+        }
+        return JSON.parse(result);
+      }
+
       // Strip extension only — common prefix stripped per-batch by stripCommonPrefix()
       function makeFileId(relPath) {
         return relPath.replace(/\\/g, "/").replace(/\.[^/.]+$/, "");
@@ -524,7 +560,7 @@
                       const fr = new FileReader();
                       fr.onload = (ev) => {
                         try {
-                          const data = JSON.parse(ev.target.result);
+                          const data = parseJsonC(ev.target.result);
                           const relPath = `${path}/${e.name}`;
                           res([
                             { fileId: makeFileId(relPath), data, name: e.name },
@@ -620,7 +656,7 @@
                 const fr = new FileReader();
                 fr.onload = (e) => {
                   try {
-                    const data = JSON.parse(e.target.result);
+                    const data = parseJsonC(e.target.result);
                     // Use webkitRelativePath if available (from webkitdirectory input), else filename
                     const relPath = file.webkitRelativePath || file.name;
                     res({ fileId: makeFileId(relPath), data, name: file.name });
@@ -660,7 +696,7 @@
                     const fr = new FileReader();
                     fr.onload = (ev) => {
                       try {
-                        const data = JSON.parse(ev.target.result);
+                        const data = parseJsonC(ev.target.result);
                         allFound.push({
                           fileId: makeFileId(entry.name),
                           data,
