@@ -503,7 +503,8 @@
             result += text[i++];
           }
         }
-        return JSON.parse(result);
+        const cleaned = result.replace(/,\s*([}\]])/g, "$1");
+        return JSON.parse(cleaned);
       }
 
       // Strip extension only — common prefix stripped per-batch by stripCommonPrefix()
